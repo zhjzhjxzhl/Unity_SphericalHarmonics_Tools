@@ -9,7 +9,7 @@ public class CubemapSHProjector : EditorWindow
     public Cubemap input_cubemap;
 
     //PRIVATE FIELDS
-    private Material    view_mat;
+    public Material    view_mat;
     private float       view_mode;
     private Vector4[]   coefficients;
 
@@ -48,11 +48,13 @@ public class CubemapSHProjector : EditorWindow
     {
         EditorGUILayout.PropertyField(sp_input_cubemap, new GUIContent("Input Cubemap"));
 
+
         so.ApplyModifiedProperties();
 
         if (input_cubemap != null)
         {
             EditorGUILayout.Space();
+            EditorGUILayout.PropertyField(so.FindProperty("view_mat"), new GUIContent("mat"));
 
             if (GUILayout.Button("CPU Uniform 9 Coefficients"))
             {
@@ -116,6 +118,22 @@ public class CubemapSHProjector : EditorWindow
                         view_mat.SetVector("c" + i.ToString(), coefficients[i]);
                         view_mat.SetTexture("input", input_cubemap);
                     }
+                }
+            }
+            EditorGUILayout.Space();
+            if (GUILayout.Button("ComputeWithLight"))
+            {
+                coefficients = new Vector4[9];
+                List<Light> lights = new List<Light>(GameObject.FindObjectsOfType<Light>());
+                if (SphericalHarmonics.CPU_Project_Uniform_9Coeff_With_Lights(lights, coefficients))
+                {
+                    for (int i = 0; i < 9; ++i)
+                    {
+                        view_mat.SetVector("c" + i.ToString(), coefficients[i]);
+                        view_mat.SetTexture("input", input_cubemap);
+                    }
+
+                    SceneView.RepaintAll();
                 }
             }
 

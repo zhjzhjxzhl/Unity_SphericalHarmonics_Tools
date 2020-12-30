@@ -531,4 +531,60 @@ public class SphericalHarmonics
 
         return true;
     }
+
+    public static bool CPU_Project_Uniform_9Coeff_With_Lights(List<Light> input, Vector4[] output)
+    {
+        int sample_count = 49;
+        if (output.Length != 9)
+        {
+            Debug.LogWarning("output size must be 9 for 9 coefficients");
+            return false;
+        }
+        for (int c = 0; c < 9; ++c)
+        {
+            foreach (Light light in input)
+            {
+                for (int s = 0; s < sample_count; ++s)
+                {
+                    Vector3 dir = Random.onUnitSphere;
+
+                    //试试均匀分布，根据s，分别再thet和fai上取值
+                    int a = s % 7;
+                    int b = Mathf.CeilToInt(s / 7);
+                    float fai = a/7f * Mathf.PI * 2;
+                    float thet = -Mathf.Acos(b / 7f * 2 - 1);
+                    dir = new Vector3(Mathf.Sin(thet) * Mathf.Cos(fai), Mathf.Cos(thet), Mathf.Sin(thet) * Mathf.Sin(fai));
+                    Debug.Log(s);
+                    Debug.Log(dir);
+                    //Debug.DrawLine(Vector3.zero, dir);
+                    //read the radiance texel
+                    float value = Mathf.Max(Vector3.Dot(light.gameObject.transform.position.normalized, dir.normalized), 0);
+                    if(light.type == LightType.Directional)
+                    {
+                        value = Mathf.Max(Vector3.Dot(-light.transform.forward, dir.normalized), 0); 
+                    }
+                    if(light.type == LightType.Point)
+                    {
+                        //如果的hi点光源，则根据距离衰减
+
+                    }
+                    Color radiance = light.color*value;
+
+                    //compute shperical harmonic
+                    float sh = SphericalHarmonicsBasis.Eval[c](dir);
+
+                    output[c].x += radiance.r * sh;
+                    output[c].y += radiance.g * sh;
+                    output[c].z += radiance.b * sh;
+                    output[c].w += radiance.a * sh;
+                }
+            }
+            output[c].x = output[c].x * 4.0f * Mathf.PI / (float)(sample_count * input.Count);
+            output[c].y = output[c].y * 4.0f * Mathf.PI / (float)(sample_count * input.Count);
+            output[c].z = output[c].z * 4.0f * Mathf.PI / (float)(sample_count * input.Count);
+            output[c].w = output[c].w * 4.0f * Mathf.PI / (float)(sample_count * input.Count);
+        }
+
+        return true;
+    }
 }

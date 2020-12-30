@@ -8,7 +8,7 @@
 	SubShader
 	{
 		Tags{ "Queue" = "Background" "RenderType" = "Background" "PreviewType" = "Skybox" }
-		Cull Off ZWrite Off
+		Cull Back ZWrite Off
 
 		Pass
 		{
